@@ -1,15 +1,14 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const bcrypt = require("bcrypt");
+const JWT = require("jsonwebtoken");
 const port = 3000;
 
 const users = [];
 app.use(express.json());
 app.use(express.urlencoded());
-
-app.get("/", (req, res) => {
-  res.json(users);
-});
 
 app.post("/signup", async (req, res) => {
   const { email, username, password, confirmPassword } = req.body;
@@ -48,6 +47,32 @@ app.post("/signup", async (req, res) => {
         .send("Password must contain small, letters caps and numbers");
   }
 });
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  // const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    if (email && password) {
+      const user = users.find((user) => user.email === email);
+
+      if (!user) res.status(401).send("User not found");
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (!result) res.status(401).send("Wrong credentials");
+
+        const token = JWT.sign(
+          { user: user.username, password: user.password },
+          process.env.ACCESS_TOKEN,
+          { expiresIn: "1h" }
+        );
+        res.json({ accessToken: token });
+      });
+    }
+  } catch {
+    res.sendStatus(500);
+  }
+});
+
 app.listen(port, () => {
   console.log(`app listenig on port ${port}`);
 });
