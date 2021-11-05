@@ -61,7 +61,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login",async (req, res) => {
   const { email, password } = req.body;
   // const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -82,7 +82,7 @@ app.post("/login", async (req, res) => {
         if (!result) res.status(401).send("Wrong credentials");
 
         const token = JWT.sign(
-          { user: user.username, password: user.password },
+          { user: user.username, password: user.password, email: user.email },
           process.env.ACCESS_TOKEN,
           { expiresIn: "1h" }
         );
@@ -98,16 +98,21 @@ app.post("/login", async (req, res) => {
     res.sendStatus(500);
   }
 });
-app.get("/users" ,(req,res)=>{
-res.send("hello users")
+app.post("/project", Authenticator,(req,res)=>{
+// const {project} =req;
+console.log(req.body);
+// let sql = `INSERT INTO users(project) values("${project}") WHERE email = ${email} `;
+
 });
 function Authenticator(req, res, next){
   const authHeader= req.headers['authorization'];
   const token = authHeader.split(' ')[1];
   if(token == null) return res.sendStatus(401);
-  JWT.verify(token, process.env.ACCESS_TOKEN, (err, user)=>{
+  JWT.verify(token, process.env.ACCESS_TOKEN, (err, {email, password, user})=>{
     if(err) return res.sendStatus(403);
-    req.user = user;
+    // req.body.email = email;
+    console.log(req.body)
+    // console.log(email, password, user);
     next();
   })
 }
